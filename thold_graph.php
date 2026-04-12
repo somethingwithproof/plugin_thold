@@ -404,23 +404,23 @@ function tholds() {
 	$statefilter = thold_get_state_filter(get_request_var('state'));
 
 	if (get_request_var('rfilter') != '') {
-		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . " td.name_cache RLIKE " . db_qstr(get_request_var('rfilter')) . "";
+		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . ' td.name_cache RLIKE ' . db_qstr(get_request_var('rfilter'));
 	}
 
 	if (get_request_var('data_template_id') != '-1') {
-		$sql_where .= ($sql_where == '' ? '(' : ' AND') . ' td.data_template_id = ' . get_request_var('data_template_id');
+		$sql_where .= ($sql_where == '' ? '(' : ' AND') . ' td.data_template_id = ' . intval(get_request_var('data_template_id'));
 	}
 
 	if (!isempty_request_var('thold_template_id')) {
 		if (get_request_var('thold_template_id') > 0) {
-			$sql_where .= ($sql_where == '' ? '(' : ' AND ') . '(td.thold_template_id = ' . get_request_var('thold_template_id') . ' AND td.template_enabled = "on")';
+			$sql_where .= ($sql_where == '' ? '(' : ' AND ') . '(td.thold_template_id = ' . intval(get_request_var('thold_template_id')) . ' AND td.template_enabled = "on")';
 		} elseif (get_request_var('thold_template_id') == '-2') {
 			$sql_where .= ($sql_where == '' ? '(' : ' AND ') . '(td.template_enabled != "on")';
 		}
 	}
 
 	if (get_request_var('host_id') != '-1') {
-		$sql_where .= ($sql_where == '' ? '(' : ' AND') . ' td.host_id = ' . get_request_var('host_id');
+		$sql_where .= ($sql_where == '' ? '(' : ' AND') . ' td.host_id = ' . intval(get_request_var('host_id'));
 	}
 
 	if ($statefilter != '') {
@@ -432,7 +432,7 @@ function tholds() {
 	} elseif (get_request_var('site_id') == '0') {
 		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id IS NULL';
 	} elseif (!isempty_request_var('site_id')) {
-		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id = ' . get_request_var('site_id');
+		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id = ' . intval(get_request_var('site_id'));
 	}
 
 	if ($sql_where != '') {
@@ -922,7 +922,11 @@ function hosts() {
 	// ================= input validation =================
 
 	// if the number of rows is -1, set it to the default
-	$rows = plugin_get_rows_per_page();
+	if (get_request_var('rows') == -1) {
+		$rows = read_config_option('num_rows_table');
+	} else {
+		$rows = get_request_var('rows');
+	}
 
 	html_start_box(__('Device Status', 'thold'), '100%', false, '3', 'center', '');
 	form_host_filter();
@@ -932,9 +936,9 @@ function hosts() {
 	$sql_where = '';
 
 	if (get_request_var('rfilter') != '') {
-		$sql_where .= " (h.deleted = ''
-			AND (h.hostname RLIKE " . db_qstr(get_request_var('rfilter')) . "
-			OR h.description RLIKE " . db_qstr(get_request_var('rfilter')) . ")";
+		$rfilter_q  = db_qstr(get_request_var('rfilter'));
+		$sql_where .= " (h.deleted = '' AND (h.hostname RLIKE " . $rfilter_q .
+			' OR h.description RLIKE ' . $rfilter_q . ')';
 	}
 
 	if (get_request_var('host_status') == '-1') {
@@ -966,7 +970,7 @@ function hosts() {
 	} elseif (get_request_var('site_id') == '0') {
 		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id = 0';
 	} elseif (!isempty_request_var('site_id')) {
-		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id = ' . get_request_var('site_id');
+		$sql_where .= ($sql_where == '' ? '(' : ' AND ') . 'h.site_id = ' . intval(get_request_var('site_id'));
 	}
 
 	$sql_where .= ($sql_where != '' ? ')' : '');
@@ -1391,7 +1395,7 @@ function thold_export_log() {
 	}
 
 	if (get_request_var('rfilter') != '') {
-		$sql_where .= ($sql_where == '' ? '' : ' AND') . " tl.description RLIKE " . db_qstr(get_request_var('rfilter')) . "";
+		$sql_where .= ($sql_where == '' ? '' : ' AND') . ' tl.description RLIKE ' . db_qstr(get_request_var('rfilter'));
 	}
 
 	$sql_order  = '';
@@ -1422,7 +1426,11 @@ function thold_show_log() {
 	thold_validate_log_vars();
 
 	// if the number of rows is -1, set it to the default
-	$rows = plugin_get_rows_per_page();
+	if (get_request_var('rows') == -1) {
+		$rows = read_config_option('num_rows_table');
+	} else {
+		$rows = get_request_var('rows');
+	}
 
 	$days = read_config_option('thold_log_storage');
 
@@ -1482,7 +1490,7 @@ function thold_show_log() {
 	}
 
 	if (get_request_var('rfilter') != '') {
-		$sql_where .= ($sql_where == '' ? '' : ' AND') . " tl.description RLIKE " . db_qstr(get_request_var('rfilter')) . "";
+		$sql_where .= ($sql_where == '' ? '' : ' AND') . ' tl.description RLIKE ' . db_qstr(get_request_var('rfilter'));
 	}
 
 	$sql_order = get_order_string();
