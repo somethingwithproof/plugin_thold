@@ -1233,7 +1233,7 @@ function thold_page_head() {
 	<script type='text/javascript'>
 	$(function() {
 		$(document).ajaxComplete(function() {
-			$('.tholdVRule').unbind().click(function(event) {
+			$('.tholdVRule').off().on('click', function(event) {
 				event.preventDefault();
 
 				href = $(this).attr('href');
@@ -1394,14 +1394,14 @@ function thold_device_top() {
 			$('#cdialog').dialog();
 		});
 
-		$('#continue').click(function(data) {
+		$('#continue').on('click', function(data) {
 			$.post('host.php?action=item_remove_tt', {
 				__csrf_magic: csrfMagicToken,
-				host_id: <?php print get_request_var('host_id'); ?>,
-				id: <?php print get_request_var('id'); ?>
+				host_id: <?php print (int)get_filter_request_var('host_id'); ?>,
+				id: <?php print (int)get_filter_request_var('id'); ?>
 			}).done(function(data) {
 				$('#cdialog').dialog('close');
-				loadPageNoHeader('host.php?action=edit&header=false&id=<?php print get_request_var('host_id'); ?>');
+				loadPageNoHeader('host.php?action=edit&header=false&id=<?php print (int)get_filter_request_var('host_id'); ?>');
 			});
 		});
 		</script>
@@ -1503,15 +1503,13 @@ function thold_device_template_edit() {
 				</table>
 				<script type='text/javascript'>
 				function addThresholdTemplate() {
-					$('#add_tt').click(function() {
-						scrollTop = $(window).scrollTop();
-						$.post('host_templates.php?header=false&action=item_add_tt', {
-							host_template_id: $('#id').val(),
-							thold_template_id: $('#thold_template_id').val(),
-							__csrf_magic: csrfMagicToken})
-						.done(function(data) {
-							loadPageNoHeader(urlPath+'host_templates.php?header=false&action=edit&id='+$('#id').val());
-						});
+					scrollTop = $(window).scrollTop();
+					$.post('host_templates.php?header=false&action=item_add_tt', {
+						host_template_id: $('#id').val(),
+						thold_template_id: $('#thold_template_id').val(),
+						__csrf_magic: csrfMagicToken})
+					.done(function(data) {
+						loadPageNoHeader(urlPath+'host_templates.php?header=false&action=edit&id='+$('#id').val());
 					});
 				}
 				</script>
@@ -1564,14 +1562,14 @@ function thold_device_template_top() {
 			$('#cdialog').dialog();
 		});
 
-	    $('#continue').click(function(data) {
+	    $('#continue').on('click', function(data) {
 			$.post('host_templates.php?action=item_remove_tt', {
 				__csrf_magic: csrfMagicToken,
-				host_template_id: <?php print get_request_var('host_template_id'); ?>,
-				id: <?php print get_request_var('id'); ?>
+				host_template_id: <?php print (int)get_filter_request_var('host_template_id'); ?>,
+				id: <?php print (int)get_filter_request_var('id'); ?>
 			}).done(function(data) {
 				$('#cdialog').dialog('close');
-				loadPageNoHeader('host_templates.php?action=edit&header=false&id=<?php print get_request_var('host_template_id'); ?>');
+				loadPageNoHeader('host_templates.php?action=edit&header=false&id=<?php print (int)get_filter_request_var('host_template_id'); ?>');
 			});
 		});
 		</script>

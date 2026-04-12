@@ -251,7 +251,7 @@ function form_thold_filter() {
 					</td>
 				</tr>
 			</table>
-			<input type='hidden' id='page' value='<?php print get_request_var('page'); ?>'>
+			<input type='hidden' id='page' value='<?php print html_escape_request_var('page'); ?>'>
 			<input type='hidden' id='tab' value='thold'>
 		</form>
 		<script type='text/javascript'>
@@ -274,7 +274,7 @@ function form_thold_filter() {
 		}
 
 		$(function() {
-			$('#thold').submit(function(event) {
+			$('#thold').on('submit', function(event) {
 				event.preventDefault();
 				applyFilter();
 			});
@@ -1261,7 +1261,7 @@ function form_host_filter() {
 					</td>
 				</tr>
 			</table>
-			<input type='hidden' name='page' value='<?php print get_request_var('page'); ?>'>
+			<input type='hidden' name='page' value='<?php print html_escape_request_var('page'); ?>'>
 			<input type='hidden' name='tab' value='hoststat'>
 		</form>
 		<script type='text/javascript'>
@@ -1282,7 +1282,7 @@ function form_host_filter() {
 		}
 
 		$(function() {
-			$('#form_devices').submit(function(event) {
+			$('#form_devices').on('submit', function(event) {
 				event.preventDefault();
 				applyFilter();
 			});
@@ -1763,7 +1763,7 @@ function form_thold_log_filter() {
 		}
 
 		$(function() {
-			$('#form_log').submit(function(event) {
+			$('#form_log').on('submit', function(event) {
 				event.preventDefault();
 				applyFilter();
 			});

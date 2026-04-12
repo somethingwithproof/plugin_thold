@@ -839,7 +839,7 @@ function thold_wizard() {
 	$(function() {
 		if ($('#type_id').val() == 'template') {
 			$('#submit').prev().hide();
-			$('#submit').off().click(function(event) {
+			$('#submit').off().on('click', function(event) {
 				event.preventDefault();
 
 				json = $('input, select').serializeObject();
@@ -861,7 +861,7 @@ function thold_wizard() {
 function thold_new_graphs_save($host_id) {
 	$return_array = false;
 
-	$selected_graphs_array = cacti_unserialize(stripslashes(get_nfilter_request_var('selected_graphs_array')));
+	$selected_graphs_array = cacti_unserialize(stripslashes(get_nfilter_request_var('selected_graphs_array')), array('allowed_classes' => false));
 
 	// Validate structure: top-level keys must be 'cg' or 'sg' (form types); sub-keys
 	// must be numeric (graph template / snmp query IDs). Rejects object injection and
