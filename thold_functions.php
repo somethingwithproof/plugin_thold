@@ -4172,52 +4172,42 @@ function thold_replace_threshold_tags_shell($text, &$thold, &$h, $currentval, $l
 		$site = __('Default', 'thold');
 	}
 
-	// Do some replacement of variables with shell escaping
-	$text = thold_str_replace('<DESCRIPTION>',   cacti_escapeshellarg($h['description']), $text);
-	$text = thold_str_replace('<HOSTNAME>',      cacti_escapeshellarg($h['hostname']), $text);
-	$text = thold_str_replace('<LOCATION>',      cacti_escapeshellarg($h['location']), $text);
-	$text = thold_str_replace('<SITE>',          cacti_escapeshellarg($site), $text);
-	$text = thold_str_replace('<GRAPHID>',       cacti_escapeshellarg((string)$local_graph_id), $text);
-	$text = thold_str_replace('<THOLD_ID>',      cacti_escapeshellarg((string)$thold['id']), $text);
-
-	$text = thold_str_replace('<CURRENTVALUE>',  cacti_escapeshellarg((string)$currentval), $text);
-	$text = thold_str_replace('<THRESHOLDNAME>', cacti_escapeshellarg($thold['name_cache']), $text);
-	$text = thold_str_replace('<DSNAME>',        cacti_escapeshellarg($data_source_name), $text);
+	$data = [
+		'DESCRIPTION'   => $h['description'],
+		'HOSTNAME'      => $h['hostname'],
+		'LOCATION'      => $h['location'],
+		'SITE'          => $site,
+		'GRAPHID'       => (string)$local_graph_id,
+		'THOLD_ID'      => (string)$thold['id'],
+		'CURRENTVALUE'  => (string)$currentval,
+		'THRESHOLDNAME' => $thold['name_cache'],
+		'DSNAME'        => $data_source_name,
+		'NOTES'         => $thold['notes'],
+		'DNOTES'        => $thold['dnotes'],
+		'DEVICENOTE'    => $thold['dnotes'],
+		'EXTERNALID'    => $thold['external_id'],
+		'TIME'          => (string)time(),
+		'DATE'          => date(CACTI_DATE_TIME_FORMAT),
+		'DATE_RFC822'   => date(DATE_RFC822),
+		'URL'           => read_config_option('base_url') . "/graph.php?local_graph_id=$local_graph_id"
+	];
 
 	if (isset($thold_types[$thold['thold_type']])) {
-		$text = thold_str_replace('<THOLDTYPE>', cacti_escapeshellarg($thold_types[$thold['thold_type']]), $text);
+		$data['THOLDTYPE'] = $thold_types[$thold['thold_type']];
 	}
-
-	$text = thold_str_replace('<NOTES>',         cacti_escapeshellarg($thold['notes']), $text);
-	$text = thold_str_replace('<DNOTES>',        cacti_escapeshellarg($thold['dnotes']), $text);
-	$text = thold_str_replace('<DEVICENOTE>',    cacti_escapeshellarg($thold['dnotes']), $text);
-	$text = thold_str_replace('<EXTERNALID>',    cacti_escapeshellarg($thold['external_id']), $text);
 
 	if ($thold['thold_type'] == 0) {
-		$text = thold_str_replace('<HI>',        cacti_escapeshellarg((string)$thold['thold_hi']), $text);
-		$text = thold_str_replace('<LOW>',       cacti_escapeshellarg((string)$thold['thold_low']), $text);
-		$text = thold_str_replace('<TRIGGER>',   cacti_escapeshellarg((string)$thold['thold_fail_trigger']), $text);
-		$text = thold_str_replace('<DURATION>',  '', $text);
+		$data['HI']      = (string)$thold['thold_hi'];
+		$data['LOW']     = (string)$thold['thold_low'];
+		$data['TRIGGER'] = (string)$thold['thold_fail_trigger'];
 	} elseif ($thold['thold_type'] == 2) {
-		$text = thold_str_replace('<HI>',        cacti_escapeshellarg((string)$thold['time_hi']), $text);
-		$text = thold_str_replace('<LOW>',       cacti_escapeshellarg((string)$thold['time_low']), $text);
-		$text = thold_str_replace('<TRIGGER>',   cacti_escapeshellarg((string)$thold['time_fail_trigger']), $text);
-		$text = thold_str_replace('<DURATION>',  cacti_escapeshellarg(plugin_thold_duration_convert($thold['local_data_id'], $thold['time_fail_length'], 'time')), $text);
-	} else {
-		$text = thold_str_replace('<HI>',        '', $text);
-		$text = thold_str_replace('<LOW>',       '', $text);
-		$text = thold_str_replace('<TRIGGER>',   '', $text);
-		$text = thold_str_replace('<DURATION>',  '', $text);
+		$data['HI']       = (string)$thold['time_hi'];
+		$data['LOW']      = (string)$thold['time_low'];
+		$data['TRIGGER']  = (string)$thold['time_fail_trigger'];
+		$data['DURATION'] = plugin_thold_duration_convert($thold['local_data_id'], $thold['time_fail_length'], 'time');
 	}
 
-	$text = thold_str_replace('<TIME>',          cacti_escapeshellarg((string)time()), $text);
-	$text = thold_str_replace('<DATE>',          cacti_escapeshellarg(date(CACTI_DATE_TIME_FORMAT)), $text);
-	$text = thold_str_replace('<DATE_RFC822>',   cacti_escapeshellarg(date(DATE_RFC822)), $text);
-
-	// URL doesn't make much sense in a shell command but if they use it, it should be safe
-	$text = thold_str_replace('<URL>',           cacti_escapeshellarg(read_config_option('base_url') . "/graph.php?local_graph_id=$local_graph_id"), $text);
-
-	return $text;
+	return cacti_substitute_tags($text, $data, 'shell');
 }
 
 function thold_replace_threshold_tags($text, &$thold, &$h, $currentval, $local_graph_id, $data_source_name) {
@@ -4244,59 +4234,52 @@ function thold_replace_threshold_tags($text, &$thold, &$h, $currentval, $local_g
 		$site = __('Default', 'thold');
 	}
 
-	// Do some replacement of variables
-	$text = thold_str_replace('<DESCRIPTION>',   $h['description'], $text);
-	$text = thold_str_replace('<HOSTNAME>',      $h['hostname'], $text);
-	$text = thold_str_replace('<LOCATION>',      $h['location'], $text);
-	$text = thold_str_replace('<SITE>',          $site, $text);
-	$text = thold_str_replace('<GRAPHID>',       $local_graph_id, $text);
-	$text = thold_str_replace('<THOLD_ID>',      $thold['id'], $text);
-
-	$text = thold_str_replace('<CURRENTVALUE>',  $currentval, $text);
-	$text = thold_str_replace('<THRESHOLDNAME>', $thold['name_cache'], $text);
-	$text = thold_str_replace('<DSNAME>',        $data_source_name, $text);
+	$data = [
+		'DESCRIPTION'   => $h['description'],
+		'HOSTNAME'      => $h['hostname'],
+		'LOCATION'      => $h['location'],
+		'SITE'          => $site,
+		'GRAPHID'       => $local_graph_id,
+		'THOLD_ID'      => $thold['id'],
+		'CURRENTVALUE'  => $currentval,
+		'THRESHOLDNAME' => $thold['name_cache'],
+		'DSNAME'        => $data_source_name,
+		'NOTES'         => $thold['notes'],
+		'DNOTES'        => $thold['dnotes'],
+		'DEVICENOTE'    => $thold['dnotes'],
+		'EXTERNALID'    => $thold['external_id'],
+		'TIME'          => time(),
+		'DATE'          => date(CACTI_DATE_TIME_FORMAT),
+		'DATE_RFC822'   => date(DATE_RFC822),
+		'URL'           => "<a href='" . html_escape("$httpurl/graph.php?local_graph_id=$local_graph_id") . "'>" . __('Link to Graph in Cacti', 'thold') . '</a>'
+	];
 
 	if (isset($thold_types[$thold['thold_type']])) {
-		$text = thold_str_replace('<THOLDTYPE>', $thold_types[$thold['thold_type']], $text);
+		$data['THOLDTYPE'] = $thold_types[$thold['thold_type']];
 	}
-
-	$text = thold_str_replace('<NOTES>',         $thold['notes'], $text);
-	$text = thold_str_replace('<DNOTES>',        $thold['dnotes'], $text);
-	$text = thold_str_replace('<DEVICENOTE>',    $thold['dnotes'], $text);
-	$text = thold_str_replace('<EXTERNALID>',    $thold['external_id'], $text);
 
 	if ($thold['thold_type'] == 0) {
-		$text = thold_str_replace('<HI>',        $thold['thold_hi'], $text);
-		$text = thold_str_replace('<LOW>',       $thold['thold_low'], $text);
-		$text = thold_str_replace('<TRIGGER>',   $thold['thold_fail_trigger'], $text);
-		$text = thold_str_replace('<DURATION>',  '', $text);
+		$data['HI']      = $thold['thold_hi'];
+		$data['LOW']     = $thold['thold_low'];
+		$data['TRIGGER'] = $thold['thold_fail_trigger'];
 	} elseif ($thold['thold_type'] == 2) {
-		$text = thold_str_replace('<HI>',        $thold['time_hi'], $text);
-		$text = thold_str_replace('<LOW>',       $thold['time_low'], $text);
-		$text = thold_str_replace('<TRIGGER>',   $thold['time_fail_trigger'], $text);
-		$text = thold_str_replace('<DURATION>',  plugin_thold_duration_convert($thold['local_data_id'], $thold['time_fail_length'], 'time'), $text);
-	} else {
-		$text = thold_str_replace('<HI>',        '', $text);
-		$text = thold_str_replace('<LOW>',       '', $text);
-		$text = thold_str_replace('<TRIGGER>',   '', $text);
-		$text = thold_str_replace('<DURATION>',  '', $text);
+		$data['HI']       = $thold['time_hi'];
+		$data['LOW']      = $thold['time_low'];
+		$data['TRIGGER']  = $thold['time_fail_trigger'];
+		$data['DURATION'] = plugin_thold_duration_convert($thold['local_data_id'], $thold['time_fail_length'], 'time');
 	}
 
-	$text = thold_str_replace('<TIME>',          time(), $text);
-	$text = thold_str_replace('<DATE>',          date(CACTI_DATE_TIME_FORMAT), $text);
-	$text = thold_str_replace('<DATE_RFC822>',   date(DATE_RFC822), $text);
+	$text = cacti_substitute_tags($text, $data, 'none');
 
-	$text = thold_str_replace('<URL>', "<a href='" . html_escape("$httpurl/graph.php?local_graph_id=$local_graph_id") . "'>" . __('Link to Graph in Cacti', 'thold') . '</a>', $text);
-
-	$data = [
+	$data_hook = [
 		'thold_data' => $thold,
 		'text'       => $text
 	];
 
-	$data = api_plugin_hook_function('thold_replacement_text', $data);
+	$data_hook = api_plugin_hook_function('thold_replacement_text', $data_hook);
 
-	if (isset($data['text'])) {
-		$text = $data['text'];
+	if (isset($data_hook['text'])) {
+		$text = $data_hook['text'];
 	}
 
 	return $text;
