@@ -3986,7 +3986,7 @@ function thold_command_execution(&$thold_data, &$h, $breach_up, $breach_down, $b
 		$queue            = read_config_option('thold_notification_queue');
 
 		if ($breach_up && $thold_data['trigger_cmd_high'] != '') {
-			$cmd = thold_replace_threshold_tags($thold_data['trigger_cmd_high'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
+			$cmd = thold_replace_threshold_tags_shell($thold_data['trigger_cmd_high'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
 
 			$cmd = thold_expand_string($thold_data, $cmd);
 
@@ -4006,10 +4006,10 @@ function thold_command_execution(&$thold_data, &$h, $breach_up, $breach_down, $b
 
 			$command_executed = true;
 		} elseif ($breach_down && $thold_data['trigger_cmd_low'] != '') {
-			$cmd = thold_replace_threshold_tags($thold_data['trigger_cmd_low'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
+			$cmd = thold_replace_threshold_tags_shell($thold_data['trigger_cmd_low'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
 			$cmd = thold_expand_string($thold_data, $cmd);
 
-			$environment = thold_set_environ($thold_data['trigger_cmd_high'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
+			$environment = thold_set_environ($thold_data['trigger_cmd_low'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
 
 			if ($queue == 'on') {
 				$data = [
@@ -4025,10 +4025,10 @@ function thold_command_execution(&$thold_data, &$h, $breach_up, $breach_down, $b
 
 			$command_executed = true;
 		} elseif ($breach_norm && $thold_data['trigger_cmd_norm'] != '') {
-			$cmd = thold_replace_threshold_tags($thold_data['trigger_cmd_norm'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
+			$cmd = thold_replace_threshold_tags_shell($thold_data['trigger_cmd_norm'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
 			$cmd = thold_expand_string($thold_data, $cmd);
 
-			$environment = thold_set_environ($thold_data['trigger_cmd_high'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
+			$environment = thold_set_environ($thold_data['trigger_cmd_norm'], $thold_data, $h, $thold_data['lastread'], $thold_data['local_graph_id'], $data_source_name);
 
 			if ($queue == 'on') {
 				$data = [
@@ -4158,6 +4158,66 @@ function thold_set_environ($text, &$thold, &$h, $currentval, $local_graph_id, $d
 	$environment = thold_putenv('THOLD_URL=' . html_escape("$httpurl/graph.php?local_graph_id=$local_graph_id"));
 
 	return $environment;
+}
+
+function thold_replace_threshold_tags_shell($text, &$thold, &$h, $currentval, $local_graph_id, $data_source_name) {
+	global $thold_types;
+
+	$site = db_fetch_cell_prepared('SELECT name
+		FROM sites
+		WHERE id = ?',
+		[$h['site_id']]);
+
+	if (!$site) {
+		$site = __('Default', 'thold');
+	}
+
+	// Do some replacement of variables with shell escaping
+	$text = thold_str_replace('<DESCRIPTION>',   cacti_escapeshellarg($h['description']), $text);
+	$text = thold_str_replace('<HOSTNAME>',      cacti_escapeshellarg($h['hostname']), $text);
+	$text = thold_str_replace('<LOCATION>',      cacti_escapeshellarg($h['location']), $text);
+	$text = thold_str_replace('<SITE>',          cacti_escapeshellarg($site), $text);
+	$text = thold_str_replace('<GRAPHID>',       cacti_escapeshellarg((string)$local_graph_id), $text);
+	$text = thold_str_replace('<THOLD_ID>',      cacti_escapeshellarg((string)$thold['id']), $text);
+
+	$text = thold_str_replace('<CURRENTVALUE>',  cacti_escapeshellarg((string)$currentval), $text);
+	$text = thold_str_replace('<THRESHOLDNAME>', cacti_escapeshellarg($thold['name_cache']), $text);
+	$text = thold_str_replace('<DSNAME>',        cacti_escapeshellarg($data_source_name), $text);
+
+	if (isset($thold_types[$thold['thold_type']])) {
+		$text = thold_str_replace('<THOLDTYPE>', cacti_escapeshellarg($thold_types[$thold['thold_type']]), $text);
+	}
+
+	$text = thold_str_replace('<NOTES>',         cacti_escapeshellarg($thold['notes']), $text);
+	$text = thold_str_replace('<DNOTES>',        cacti_escapeshellarg($thold['dnotes']), $text);
+	$text = thold_str_replace('<DEVICENOTE>',    cacti_escapeshellarg($thold['dnotes']), $text);
+	$text = thold_str_replace('<EXTERNALID>',    cacti_escapeshellarg($thold['external_id']), $text);
+
+	if ($thold['thold_type'] == 0) {
+		$text = thold_str_replace('<HI>',        cacti_escapeshellarg((string)$thold['thold_hi']), $text);
+		$text = thold_str_replace('<LOW>',       cacti_escapeshellarg((string)$thold['thold_low']), $text);
+		$text = thold_str_replace('<TRIGGER>',   cacti_escapeshellarg((string)$thold['thold_fail_trigger']), $text);
+		$text = thold_str_replace('<DURATION>',  '', $text);
+	} elseif ($thold['thold_type'] == 2) {
+		$text = thold_str_replace('<HI>',        cacti_escapeshellarg((string)$thold['time_hi']), $text);
+		$text = thold_str_replace('<LOW>',       cacti_escapeshellarg((string)$thold['time_low']), $text);
+		$text = thold_str_replace('<TRIGGER>',   cacti_escapeshellarg((string)$thold['time_fail_trigger']), $text);
+		$text = thold_str_replace('<DURATION>',  cacti_escapeshellarg(plugin_thold_duration_convert($thold['local_data_id'], $thold['time_fail_length'], 'time')), $text);
+	} else {
+		$text = thold_str_replace('<HI>',        '', $text);
+		$text = thold_str_replace('<LOW>',       '', $text);
+		$text = thold_str_replace('<TRIGGER>',   '', $text);
+		$text = thold_str_replace('<DURATION>',  '', $text);
+	}
+
+	$text = thold_str_replace('<TIME>',          cacti_escapeshellarg((string)time()), $text);
+	$text = thold_str_replace('<DATE>',          cacti_escapeshellarg(date(CACTI_DATE_TIME_FORMAT)), $text);
+	$text = thold_str_replace('<DATE_RFC822>',   cacti_escapeshellarg(date(DATE_RFC822)), $text);
+
+	// URL doesn't make much sense in a shell command but if they use it, it should be safe
+	$text = thold_str_replace('<URL>',           cacti_escapeshellarg(read_config_option('base_url') . "/graph.php?local_graph_id=$local_graph_id"), $text);
+
+	return $text;
 }
 
 function thold_replace_threshold_tags($text, &$thold, &$h, $currentval, $local_graph_id, $data_source_name) {
